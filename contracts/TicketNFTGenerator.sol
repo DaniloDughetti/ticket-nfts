@@ -85,7 +85,7 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     /*
      * Smart contract custom methods
      */
-    function mintTicket(string memory _url) public whenNotPaused {
+    function mintTicket() public whenNotPaused {
         uint256 tokenId = tokenCounter.current();
         
         console.log(
@@ -94,8 +94,12 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
             msg.sender
         );
 
+        /*
+         * In this stage passing only Common ticket. Then we will implement Chainlink randomness in order to
+         * mint random ticket 
+         */
         _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, _url);
+        _setTokenURI(tokenId, getTokenUrl(Rarity.COMMON));
 
         tokenCounter.increment();
         incremenTokenCounter();

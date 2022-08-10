@@ -15,9 +15,9 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
 
     enum Rarity { COMMON, RARE, SUPER_RARE }
 
-    string private URL_COMMON = "QmVcoZNRxojq6md86j9Sa7LQbWeXb777kK8LG4gr1AeCMd";
-    string private URL_RARE = "QmWhWQa9PaE3W57GnJbYjSguaqjVMhdqZoKC8QmGt92RYP";
-    string private URL_SUPER_RARE = "QmRkihMmqSfBmjKts65MQvh7xWwpiwSrFT2cj7B1HDjr7X";
+    string private URL_COMMON = "QmWqkv1i8RcdhuuqwhiewrLwgrsBmm3m6tjdnb3bDoXuhc";
+    string private URL_RARE = "QmXGezU1jRBPtSvnyG3D1wPpLhvtD1yYSdWoHzSiEc8v5P";
+    string private URL_SUPER_RARE = "QmchhD3zimmerwJMzqeZExCWaTcwKzFpngL3dkapbKSdhW";
     
     using Counters for Counters.Counter;
     using SafeMath for uint256;

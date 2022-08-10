@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
-require('@nomiclabs/hardhat-waffle');
+require("@nomicfoundation/hardhat-chai-matchers");
+require("@nomiclabs/hardhat-ethers");
 require("dotenv").config({ path: ".env" });
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {

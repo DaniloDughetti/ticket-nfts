@@ -119,11 +119,22 @@ _Below the commands list needed to run project locally_
     PRIVATE_KEY=<MAIN NET METAMASK PRIVATE KEY>
     MAX_SUPPLY=100
    ```
-5. Deploy smart contract on Rinkeby
+5. Deploy smart contract on localhost (usefull to read logs and develop your smart contract in relax)
    ```sh
    npx hardhat run scripts/deploy.js
    ```
-   
+5. Deploy smart contract on Rinkeby netword (usefull test your smart contract in test net)
+   ```sh
+   npx hardhat run scripts/deploy.js --network rinkeby
+   ```
+   Don't be afraid if this error occour one or 10.000 times "it's normal", continue to launch command until you get it deployed:
+   ```sh
+    ProviderError: loading txs from DB: err: rlp parse transaction: invalid chainID, 1 (expected 4), rlp: f867228459682f0982cd2494c510bb7cbddbce9ebc80f4835b904903ccc6d0e380846fe15b4425a0c4187491964d1f6c3d8b37d0a4341e9256a4f606be021b319a41980ab7e66012a03147d24284af0e90e420bd21cdce03c04e7a082b3bcc67c0a3a4b01926e5370c
+    at HttpProvider.request (/Users/danilodughetti/Coding/workspace-blockchain/eth/ticket-nfts/node_modules/hardhat/src/internal/core/providers/http.ts:78:19)
+    at LocalAccountsProvider.request (/Users/danilodughetti/Coding/workspace-blockchain/eth/ticket-nfts/node_modules/hardhat/src/internal/core/providers/accounts.ts:182:36)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at EthersProviderWrapper.send (/Users/danilodughetti/Coding/workspace-blockchain/eth/ticket-nfts/node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)
+   ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Usage

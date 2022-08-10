@@ -4,7 +4,7 @@ const main = async () => {
     const nftContract = await nftContractFactory.deploy(process.env.MAX_SUPPLY);
     await nftContract.deployed();
     console.log("Contract deployed to:", nftContract.address);
-    let transaction = await nftContract.mintTicket("ipfs:test");
+    let transaction = await nftContract.mintTicket();
     await transaction.wait();  
   };
   

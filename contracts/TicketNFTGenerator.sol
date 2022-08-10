@@ -28,7 +28,7 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     uint256 public mintedTokens;
     string private baseUrl;
 
-    event TicketMinted(address sender, uint256 tokenId, uint256 tokenCounter);
+    event TicketMinted(address sender, uint256 tokenId, uint256 tokenCounter, uint256 maxSupply);
     event TicketToShow(uint256 tokenId, string tokenUrl);
 
     constructor(uint256 _maxSupply) ERC721("TicketNFT", "TKT") {
@@ -102,7 +102,7 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
 
         console.log("mintedNfts: %s", mintedTokens);
 
-        emit TicketMinted(msg.sender, tokenId, mintedTokens);
+        emit TicketMinted(msg.sender, tokenId, mintedTokens, maxSupply);
 
     }
 

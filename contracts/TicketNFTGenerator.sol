@@ -111,7 +111,7 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     }
 
     //Emits token owned
-    function getNftList() public whenNotPaused {
+    function getTokenList() public whenNotPaused {
         uint256 tokenList = balanceOf(msg.sender);
         for(uint i = 0; i < tokenList; i++) {
             uint256 tokenId = tokenOfOwnerByIndex(msg.sender, i);

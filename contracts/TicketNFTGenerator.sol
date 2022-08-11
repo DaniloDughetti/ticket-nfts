@@ -113,9 +113,12 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     //Emits token owned
     function getTokenList() public whenNotPaused {
         uint256 tokenList = balanceOf(msg.sender);
+        console.log("tokenList length: %s", tokenList);
         for(uint i = 0; i < tokenList; i++) {
             uint256 tokenId = tokenOfOwnerByIndex(msg.sender, i);
             emit TicketToShow(tokenId, tokenURI(tokenId));
+            console.log("tokenId: %s", tokenId);
+            console.log("tokenUrl: %s", tokenURI(tokenId));
         }
     }
 

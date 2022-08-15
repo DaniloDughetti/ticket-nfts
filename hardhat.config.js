@@ -17,14 +17,14 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 module.exports = {
   solidity: "0.8.1",
   networks: {
-    rinkeby: {
-      url: process.env.QUICKNODE_API_KEY_URL,
-      accounts: [process.env.RINKEBY_PRIVATE_KEY],
+    goerli: {
+      url: process.env.GOERLI_QUICKNODE_API_KEY_URL,
+      accounts: [process.env.GOERLI_PRIVATE_KEY],
     },
     mainnet: {
       chainId: 1,
-      url: process.env.PROD_QUICKNODE_KEY,
-      accounts: [process.env.PRIVATE_KEY],
+      url: process.env.MAINNET_QUICKNODE_API_KEY_URL,
+      accounts: [process.env.MAINNET_PRIVATE_KEY],
     },
   },
 };

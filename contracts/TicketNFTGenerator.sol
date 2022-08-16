@@ -111,6 +111,9 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     }
 
     //Emits token owned
+    /*
+     * Not the right way to fetch tokens
+     */
     function getTokenList() public whenNotPaused {
         uint256 tokenList = balanceOf(msg.sender);
         console.log("tokenList length: %s", tokenList);
@@ -125,6 +128,10 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     function setMaxSupply(uint256 _maxSupply) public whenNotPaused onlyOwner { 
         require(_maxSupply > maxSupply, "New maximum supply must be greater than the previous one");
         maxSupply = _maxSupply;
+    }
+
+    function getMaxSupply() public whenNotPaused view returns(uint256) {
+        return totalSupply();
     }
 
     function getBalance() onlyOwner view public returns(uint256) {

@@ -30,6 +30,7 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
 
     event TicketMinted(address sender, uint256 tokenId, uint256 tokenCounter, uint256 maxSupply);
     event TicketToShow(uint256 tokenId, string tokenUrl);
+    event TicketSent(uint256 tokenId, address from, address to);
 
     constructor(uint256 _maxSupply) ERC721("TicketNFT", "TKT") {
         maxSupply = _maxSupply;
@@ -131,7 +132,11 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     }
 
     function getMaxSupply() public whenNotPaused view returns(uint256) {
-        return totalSupply();
+        return maxSupply;
+    }
+
+    function getTokenCounter() public whenNotPaused view returns(uint256) {
+        return tokenCounter.current();
     }
 
     function getBalance() onlyOwner view public returns(uint256) {
@@ -139,8 +144,10 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     }
 
     function givesToken(uint _tokenId, address _to) public{
-        require(isTokenOwned(_tokenId), "You are not the owner of this token");
+        //Useless isTokenOwned because it already get checked in tranferFrom method
+        //require(isTokenOwned(_tokenId), "You are not the owner of this token");
         transferFrom(msg.sender, _to, _tokenId);
+        emit TicketSent(_tokenId, msg.sender, _to);
     }
 
     function sendMoney(address _to, uint256 _amount) public onlyOwner {
@@ -152,15 +159,20 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
         balance = balance.add(msg.value);
     }
 
-    function isTokenOwned(uint256 _tokenId) private view returns(bool){
-        uint256 tokenList = balanceOf(msg.sender);
-        for(uint i = 0; i < tokenList; i++) {
-            uint256 tokenId = tokenOfOwnerByIndex(msg.sender, i);
-            if(tokenId == _tokenId) {
-                return true;
-            }
+    function tokenURIIfOwned(uint256 _tokenId)
+        public
+        view
+        returns (string memory)
+    {
+        if(isTokenOwned(_tokenId)) {
+            return super.tokenURI(_tokenId);
+        } else {
+            return "";
         }
-        return false;
+    }
+
+    function isTokenOwned(uint256 _tokenId) public view returns(bool) {
+        return _isApprovedOrOwner(msg.sender, _tokenId);
     }
     function incremenTokenCounter() private {
         require(mintedTokens < maxSupply, "Mintable nfts have reached maximum supply");

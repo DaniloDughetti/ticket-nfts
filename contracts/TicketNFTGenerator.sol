@@ -56,33 +56,33 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     function _baseURI() internal pure override returns (string memory) {
         return "ipfs://";
     }
-    function _beforeTokenTransfer(address _from, address _to, uint256 _tokenId)
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId)
         internal
         override(ERC721, ERC721Enumerable)
     {
-        super._beforeTokenTransfer(_from, _to, _tokenId);
+        super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    function _burn(uint256 _tokenId) internal override(ERC721, ERC721URIStorage) {
-        super._burn(_tokenId);
+    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
+        super._burn(tokenId);
     }
 
-    function tokenURI(uint256 _tokenId)
+    function tokenURI(uint256 tokenId)
         public
         view
         override(ERC721, ERC721URIStorage)
         returns (string memory)
     {
-        return super.tokenURI(_tokenId);
+        return super.tokenURI(tokenId);
     }
 
-    function supportsInterface(bytes4 _interfaceId)
+    function supportsInterface(bytes4 interfaceId)
         public
         view
         override(ERC721, ERC721Enumerable)
         returns (bool)
     {
-        return super.supportsInterface(_interfaceId);
+        return super.supportsInterface(interfaceId);
     }
 
     /*

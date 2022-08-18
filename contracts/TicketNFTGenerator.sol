@@ -25,15 +25,17 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     Counters.Counter private tokenCounter;
     uint256 private maxSupply;
     uint256 private balance;
-    uint256 public mintedTokens;
+    uint256 private mintedTokens;
+    uint256 public mintPrice;
     string private baseUrl;
 
     event TicketMinted(address sender, uint256 tokenId, uint256 tokenCounter, uint256 maxSupply);
     event TicketToShow(uint256 tokenId, string tokenUrl);
     event TicketSent(uint256 tokenId, address from, address to);
 
-    constructor(uint256 _maxSupply) ERC721("TicketNFT", "TKT") {
+    constructor(uint256 _maxSupply, uint256 _initialMintPrice) ERC721("TicketNFT", "TKT") {
         maxSupply = _maxSupply;
+        mintPrice = _initialMintPrice;
         console.log("Contract instantiated");
     }
     
@@ -54,39 +56,41 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     function _baseURI() internal pure override returns (string memory) {
         return "ipfs://";
     }
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId)
+    function _beforeTokenTransfer(address _from, address _to, uint256 _tokenId)
         internal
         override(ERC721, ERC721Enumerable)
     {
-        super._beforeTokenTransfer(from, to, tokenId);
+        super._beforeTokenTransfer(_from, _to, _tokenId);
     }
 
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-        super._burn(tokenId);
+    function _burn(uint256 _tokenId) internal override(ERC721, ERC721URIStorage) {
+        super._burn(_tokenId);
     }
 
-    function tokenURI(uint256 tokenId)
+    function tokenURI(uint256 _tokenId)
         public
         view
         override(ERC721, ERC721URIStorage)
         returns (string memory)
     {
-        return super.tokenURI(tokenId);
+        return super.tokenURI(_tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(bytes4 _interfaceId)
         public
         view
         override(ERC721, ERC721Enumerable)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return super.supportsInterface(_interfaceId);
     }
 
     /*
      * Smart contract custom methods
      */
-    function mintTicket() public whenNotPaused {
+    function mintTicket() public whenNotPaused payable {
+        require(msg.value >= mintPrice, "Not enough ETH sent, please check price!"); 
+
         uint256 tokenId = tokenCounter.current();
         
         console.log(
@@ -111,19 +115,12 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
 
     }
 
-    //Emits token owned
-    /*
-     * Not the right way to fetch tokens
-     */
-    function getTokenList() public whenNotPaused {
-        uint256 tokenList = balanceOf(msg.sender);
-        console.log("tokenList length: %s", tokenList);
-        for(uint i = 0; i < tokenList; i++) {
-            uint256 tokenId = tokenOfOwnerByIndex(msg.sender, i);
-            emit TicketToShow(tokenId, tokenURI(tokenId));
-            console.log("tokenId: %s", tokenId);
-            console.log("tokenUrl: %s", tokenURI(tokenId));
-        }
+    function setMintPrice(uint256 _mintPrice) public onlyOwner {
+        mintPrice = _mintPrice;
+    }
+
+    function getMintPrice() public whenNotPaused view returns(uint256) {
+        return mintPrice;
     }
 
     function setMaxSupply(uint256 _maxSupply) public whenNotPaused onlyOwner { 
@@ -143,9 +140,7 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
         return balance;
     }
 
-    function givesToken(uint _tokenId, address _to) public{
-        //Useless isTokenOwned because it already get checked in tranferFrom method
-        //require(isTokenOwned(_tokenId), "You are not the owner of this token");
+    function givesToken(uint _tokenId, address _to) public {
         transferFrom(msg.sender, _to, _tokenId);
         emit TicketSent(_tokenId, msg.sender, _to);
     }

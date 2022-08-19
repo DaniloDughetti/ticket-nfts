@@ -15,7 +15,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.1",
+  solidity: "0.8.7",
   networks: {
     goerli: {
       url: process.env.GOERLI_QUICKNODE_API_KEY_URL,

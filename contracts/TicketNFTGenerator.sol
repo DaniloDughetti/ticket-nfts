@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.1;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
@@ -10,35 +10,107 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "hardhat/console.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 
-contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownable, Pausable {
+contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownable, Pausable, VRFConsumerBaseV2 {
 
-    enum Rarity { COMMON, RARE, SUPER_RARE }
+    struct ConfigTicket {
+        string urlCommon;
+        string urlRare;
+        string urlSuperRare;
 
-    string private URL_COMMON = "QmWqkv1i8RcdhuuqwhiewrLwgrsBmm3m6tjdnb3bDoXuhc";
-    string private URL_RARE = "QmXGezU1jRBPtSvnyG3D1wPpLhvtD1yYSdWoHzSiEc8v5P";
-    string private URL_SUPER_RARE = "QmchhD3zimmerwJMzqeZExCWaTcwKzFpngL3dkapbKSdhW";
+        uint256 upperLimitCommon;
+        uint256 upperLimitRare;
+    }
+
+    struct ConfigChainLink {
+        uint64 subscriptionId;
+        address vrfCoordinator;
+        bytes32 keyHash;
+        uint32 callbackGasLimit;
+        uint16 requestConfirmations;
+        uint32 wordsNumber;
+    }
+    //State variables from env
+    ConfigTicket private configTicket;
+    ConfigChainLink private configChainLink;
+    uint256 private maxSupply;
+    uint256 public mintPrice;
     
+    //Token management state variables
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
     Counters.Counter private tokenCounter;
-    uint256 private maxSupply;
     uint256 private balance;
     uint256 private mintedTokens;
-    uint256 public mintPrice;
     string private baseUrl;
 
+    //Chainlink state variables
+    VRFCoordinatorV2Interface COORDINATOR;
+    uint256[] private retrievedRandomWords;
+    uint256 private requestId;
+    
     event TicketMinted(address sender, uint256 tokenId, uint256 tokenCounter, uint256 maxSupply);
     event TicketToShow(uint256 tokenId, string tokenUrl);
     event TicketSent(uint256 tokenId, address from, address to);
+    event TicketRandomnessGenerated(uint256 randomNumber);
 
-    constructor(uint256 _maxSupply, uint256 _initialMintPrice) ERC721("TicketNFT", "TKT") {
+    constructor(uint256 _maxSupply, 
+    uint256 _initialMintPrice,
+    string memory _urlCommon,
+    string memory _urlRare,
+    string memory _urlSuperRare,
+    uint256 _upperLimitCommon,
+    uint256 _upperLimitRare,
+    uint64 _subscriptionId,
+    address _vrfCoordinator,
+    bytes32 _keyHash
+    ) VRFConsumerBaseV2(configChainLink.vrfCoordinator)
+    ERC721("TicketNFT", "TKT")  {
         maxSupply = _maxSupply;
         mintPrice = _initialMintPrice;
+        configTicket = ConfigTicket({
+            urlCommon: _urlCommon,
+            urlRare: _urlRare,
+            urlSuperRare: _urlSuperRare,
+            upperLimitCommon: _upperLimitCommon,
+            upperLimitRare: _upperLimitRare
+        });
+        configChainLink = ConfigChainLink({
+            subscriptionId: _subscriptionId,
+            vrfCoordinator: _vrfCoordinator,
+            keyHash: _keyHash,
+            callbackGasLimit: 2500000,
+            requestConfirmations: 3,
+            wordsNumber: 1
+        });
+        
+        retrievedRandomWords.push(0);
+
+        COORDINATOR = VRFCoordinatorV2Interface(configChainLink.vrfCoordinator);
         console.log("Contract instantiated");
     }
-    
+
+    function requestRandomWords() external {
+        requestId = COORDINATOR.requestRandomWords(
+        configChainLink.keyHash,
+        configChainLink.subscriptionId,
+        configChainLink.requestConfirmations,
+        configChainLink.callbackGasLimit,
+        configChainLink.wordsNumber
+        );
+    }
+
+    function fulfillRandomWords(
+        uint256,
+        uint256[] memory randomWords
+    ) internal override {
+        retrievedRandomWords = randomWords;
+        retrievedRandomWords[0] = (retrievedRandomWords[0] % 100) + 1;
+        emit TicketRandomnessGenerated(retrievedRandomWords[0]);
+    }
     /*
      * Pause implementation
      */
@@ -104,7 +176,8 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
          * mint random ticket 
          */
         _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, getTokenUrl(Rarity.COMMON));
+
+        _setTokenURI(tokenId, getTokenUrl(retrievedRandomWords[0]));
 
         tokenCounter.increment();
         incremenTokenCounter();
@@ -174,13 +247,13 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
         mintedTokens = mintedTokens.add(1);
     }
 
-    function getTokenUrl(Rarity _rarity) private view returns (string memory) {
-        if(_rarity == Rarity.RARE) {
-            return URL_RARE;
-        } else if(_rarity == Rarity.SUPER_RARE) {
-            return URL_SUPER_RARE;
+    function getTokenUrl(uint256 _randomNumber) private view returns (string memory) {
+        if(_randomNumber >= configTicket.upperLimitCommon && _randomNumber <= configTicket.upperLimitRare) {
+            return configTicket.urlRare;
+        } else if(_randomNumber > configTicket.upperLimitRare) {
+            return configTicket.urlSuperRare;
         } else {
-            return URL_COMMON;
+            return configTicket.urlCommon;
         }
     }
 

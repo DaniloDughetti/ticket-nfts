@@ -49,13 +49,13 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
 
     //Chainlink state variables
     VRFCoordinatorV2Interface COORDINATOR;
-    uint256[] private retrievedRandomWords;
-    uint256 private requestId;
+    mapping(uint256 => address) private requestIdAddresses;
+    mapping(address => uint256) private addressRandomValues;
     
     event TicketMinted(address sender, uint256 tokenId, uint256 tokenCounter, uint256 maxSupply);
     event TicketToShow(uint256 tokenId, string tokenUrl);
     event TicketSent(uint256 tokenId, address from, address to);
-    event TicketRandomnessGenerated(uint256 randomNumber);
+    event TicketRandomnessGenerated();
 
     constructor(uint256 _maxSupply, 
     uint256 _initialMintPrice,
@@ -86,30 +86,29 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
             requestConfirmations: 3,
             wordsNumber: 1
         });
-        
-        retrievedRandomWords.push(0);
-
         COORDINATOR = VRFCoordinatorV2Interface(configChainLink.vrfCoordinator);
         console.log("Contract instantiated");
     }
 
     function requestRandomWords() external {
-        requestId = COORDINATOR.requestRandomWords(
+        uint256 requestId = COORDINATOR.requestRandomWords(
         configChainLink.keyHash,
         configChainLink.subscriptionId,
         configChainLink.requestConfirmations,
         configChainLink.callbackGasLimit,
         configChainLink.wordsNumber
         );
+        requestIdAddresses[requestId] = msg.sender;
+        
+
+        emit TicketRandomnessGenerated();
     }
 
     function fulfillRandomWords(
-        uint256,
+        uint256 requestId,
         uint256[] memory randomWords
     ) internal override {
-        retrievedRandomWords = randomWords;
-        retrievedRandomWords[0] = (retrievedRandomWords[0] % 100) + 1;
-        emit TicketRandomnessGenerated(retrievedRandomWords[0]);
+            addressRandomValues[requestIdAddresses[requestId]] = randomWords[0];
     }
     /*
      * Pause implementation
@@ -177,7 +176,13 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
          */
         _safeMint(msg.sender, tokenId);
 
-        _setTokenURI(tokenId, getTokenUrl(retrievedRandomWords[0]));
+        uint256 randomWord = 0;
+        
+        if(addressRandomValues[msg.sender] != 0) {
+            randomWord = addressRandomValues[msg.sender];
+        }
+        
+        _setTokenURI(tokenId, getTokenUrl(getNormalizedRandomNumber(randomWord)));
 
         tokenCounter.increment();
         incremenTokenCounter();
@@ -186,6 +191,10 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
 
         emit TicketMinted(msg.sender, tokenId, mintedTokens, maxSupply);
 
+    }
+
+    function getRandomNumber() public view returns(uint256) {
+        return getNormalizedRandomNumber(addressRandomValues[msg.sender]);
     }
 
     function setMintPrice(uint256 _mintPrice) public onlyOwner {
@@ -245,6 +254,10 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     function incremenTokenCounter() private {
         require(mintedTokens < maxSupply, "Mintable nfts have reached maximum supply");
         mintedTokens = mintedTokens.add(1);
+    }
+    
+    function getNormalizedRandomNumber(uint256 _randomNumber) private pure returns(uint256){
+        return (_randomNumber % 100) + 1;
     }
 
     function getTokenUrl(uint256 _randomNumber) private view returns (string memory) {

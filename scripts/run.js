@@ -13,8 +13,7 @@ const main = async () => {
       process.env.CHAINLINK_KEY_HASH);
     await nftContract.deployed();
     console.log("Contract deployed to:", nftContract.address);
-    let transaction = await nftContract.mintTicket();
-    let tokenList = await nftContract.getTokenList();
+    let transaction = await nftContract.mintTicket({value: process.env.INITIAL_MINT_PRICE});
     await transaction.wait();
     await tokenList.wait();
   };

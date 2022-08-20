@@ -55,7 +55,7 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     event TicketMinted(address sender, uint256 tokenId, uint256 tokenCounter, uint256 maxSupply);
     event TicketToShow(uint256 tokenId, string tokenUrl);
     event TicketSent(uint256 tokenId, address from, address to);
-    event TicketRandomnessGenerated();
+    event TicketRandomnessGenerated(uint256 randomNumber);
 
     constructor(uint256 _maxSupply, 
     uint256 _initialMintPrice,
@@ -99,16 +99,14 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
         configChainLink.wordsNumber
         );
         requestIdAddresses[requestId] = msg.sender;
-        
-
-        emit TicketRandomnessGenerated();
     }
 
     function fulfillRandomWords(
         uint256 requestId,
         uint256[] memory randomWords
     ) internal override {
-            addressRandomValues[requestIdAddresses[requestId]] = randomWords[0];
+            addressRandomValues[requestIdAddresses[requestId]] = getNormalizedRandomNumber(randomWords[0]);
+            emit TicketRandomnessGenerated(addressRandomValues[requestIdAddresses[requestId]]);
     }
     /*
      * Pause implementation

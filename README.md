@@ -113,17 +113,26 @@ _Below the commands list needed to run project locally_
 3. Register a free node endpoint at [QuickNode](https://www.quicknode.com/) and copy/paste API KEY and PRIVATE KEY
 4. Edit environment variables in `.env`
    ```js
-    QUICKNODE_API_KEY_URL=<RINKEBY QUICKNODE ENDPOINT API KEY>
-    RINKEBY_PRIVATE_KEY=<RINKEBY METAMASK PRIVATE KEY>
-    PROD_QUICKNODE_KEY=<MAIN NET QUICKNODE ENDPOINT API KEY>
-    PRIVATE_KEY=<MAIN NET METAMASK PRIVATE KEY>
-    MAX_SUPPLY=100
+    GOERLI_QUICKNODE_API_KEY_URL=<Goerli Quicknode API URL>
+    GOERLI_PRIVATE_KEY=<Owner address private key>
+    MAINNET_QUICKNODE_API_KEY_URL=<Main net Quicknode API URL>
+    MAINNET_PRIVATE_KEY=<Owner address private key>
+    URL_COMMON=<IPFS id to ERC721 json>
+    URL_RARE=<IPFS id to ERC721 json>
+    URL_SUPER_RARE=<IPFS id to ERC721 json>
+    UPPER_LIMIT_COMMON = <Upper limit common rarity>
+    UPPER_LIMIT_RARE = <Upper limmit rare rarity>
+    MAX_SUPPLY=<ERC721 token max supply>
+    INITIAL_MINT_PRICE=<Initial price to mint>
+    CHAINLINK_SUBSCRIPTION_ID=<Chainlink subscription id>
+    CHAINLINK_VRF_COORDINATOR=<Chainlink VRF coordinator Goerli value>
+    CHAINLINK_KEY_HASH=<Chainlink key hash Goerli value>
    ```
 5. Deploy smart contract on localhost (usefull to read logs and develop your smart contract in relax)
    ```sh
    npx hardhat run scripts/deploy.js
    ```
-5. Deploy smart contract on Rinkeby netword (usefull test your smart contract in test net)
+6. Deploy smart contract on Rinkeby netword (usefull test your smart contract in test net)
    ```sh
    npx hardhat run scripts/deploy.js --network rinkeby
    ```
@@ -135,6 +144,7 @@ _Below the commands list needed to run project locally_
     at processTicksAndRejections (node:internal/process/task_queues:96:5)
     at EthersProviderWrapper.send (/Users/danilodughetti/Coding/workspace-blockchain/eth/ticket-nfts/node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)
    ```
+7. Create a Chainlink subscription and register deployed smart contract as consumer (for more detail visit this (page)[https://docs.chain.link/docs/vrf/v2/introduction/])
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Usage

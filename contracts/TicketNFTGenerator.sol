@@ -22,6 +22,10 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
 
         uint256 upperLimitCommon;
         uint256 upperLimitRare;
+        uint256 updatedUpperLimitCommon;
+        uint256 updatedUpperLimitRare;
+        uint256 randomRangeCommon;
+        uint256 randomRangeRare;
     }
 
     struct ConfigChainLink {
@@ -55,7 +59,7 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     event TicketMinted(address sender, uint256 tokenId, uint256 tokenCounter, uint256 maxSupply);
     event TicketToShow(uint256 tokenId, string tokenUrl);
     event TicketSent(uint256 tokenId, address from, address to);
-    event TicketRandomnessGenerated(uint256 randomNumber);
+    event TicketRandomnessGenerated();
 
     constructor(uint256 _maxSupply, 
     uint256 _initialMintPrice,
@@ -76,7 +80,11 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
             urlRare: _urlRare,
             urlSuperRare: _urlSuperRare,
             upperLimitCommon: _upperLimitCommon,
-            upperLimitRare: _upperLimitRare
+            upperLimitRare: _upperLimitRare,
+            updatedUpperLimitCommon: _upperLimitCommon,
+            updatedUpperLimitRare: _upperLimitRare,
+            randomRangeCommon: 10, 
+            randomRangeRare: 2
         });
         configChainLink = ConfigChainLink({
             subscriptionId: _subscriptionId,
@@ -84,32 +92,35 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
             keyHash: _keyHash,
             callbackGasLimit: 2500000,
             requestConfirmations: 3,
-            wordsNumber: 1
+            wordsNumber: 2
         });
         COORDINATOR = VRFCoordinatorV2Interface(configChainLink.vrfCoordinator);
         console.log("Contract instantiated");
     }
 
-    function requestRandomWords() external {
-        uint256 requestId = COORDINATOR.requestRandomWords(
-        configChainLink.keyHash,
-        configChainLink.subscriptionId,
-        configChainLink.requestConfirmations,
-        configChainLink.callbackGasLimit,
-        configChainLink.wordsNumber
+    /*
+    * Chainlink overrided methods
+    */
+    function requestRandomWords() external onlyOwner {
+        COORDINATOR.requestRandomWords(
+            configChainLink.keyHash,
+            configChainLink.subscriptionId,
+            configChainLink.requestConfirmations,
+            configChainLink.callbackGasLimit,
+            configChainLink.wordsNumber
         );
-        requestIdAddresses[requestId] = msg.sender;
     }
 
     function fulfillRandomWords(
-        uint256 requestId,
+        uint256,
         uint256[] memory randomWords
     ) internal override {
-            addressRandomValues[requestIdAddresses[requestId]] = getNormalizedRandomNumber(randomWords[0]);
-            emit TicketRandomnessGenerated(addressRandomValues[requestIdAddresses[requestId]]);
+            configTicket.updatedUpperLimitCommon = configTicket.upperLimitCommon + getNormalizedRandomNumber(randomWords[0], configTicket.randomRangeCommon);
+            configTicket.updatedUpperLimitRare = configTicket.upperLimitRare + getNormalizedRandomNumber(randomWords[1], configTicket.randomRangeRare);
+            emit TicketRandomnessGenerated();
     }
     /*
-     * Pause implementation
+     * Governance methods
      */
     function pause() public onlyOwner() {
         _pause();
@@ -119,9 +130,8 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
         _unpause();
     }
     /*
-     * Ovverridden methods for ERC721Enumerable
+     *  RC721Enumerable ovverrided methods
      */
-
     function _baseURI() internal pure override returns (string memory) {
         return "ipfs://";
     }
@@ -157,8 +167,9 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     /*
      * Smart contract custom methods
      */
-    function mintTicket() public whenNotPaused payable {
+    function mintTicket(uint256 _randomNumber) public whenNotPaused payable {
         require(msg.value >= mintPrice, "Not enough ETH sent, please check price!"); 
+        require(_randomNumber >= 0 && _randomNumber <=100, "randomNumber out of range");
 
         uint256 tokenId = tokenCounter.current();
         
@@ -180,7 +191,7 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
             randomWord = addressRandomValues[msg.sender];
         }
         
-        _setTokenURI(tokenId, getTokenUrl(getNormalizedRandomNumber(randomWord)));
+        _setTokenURI(tokenId, getTokenUrl(_randomNumber));
 
         tokenCounter.increment();
         incremenTokenCounter();
@@ -191,8 +202,12 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
 
     }
 
-    function getRandomNumber() public view returns(uint256) {
-        return getNormalizedRandomNumber(addressRandomValues[msg.sender]);
+    function getUpdatedUpperLimitCommon() public view returns(uint256){
+        return configTicket.updatedUpperLimitCommon;
+    }
+
+    function getUpdatedUpperLimitRare() public view returns(uint256){
+        return configTicket.updatedUpperLimitRare;
     }
 
     function setMintPrice(uint256 _mintPrice) public onlyOwner {
@@ -249,19 +264,22 @@ contract TicketNFTGenerator is ERC721, ERC721URIStorage, ERC721Enumerable, Ownab
     function isTokenOwned(uint256 _tokenId) public view returns(bool) {
         return _isApprovedOrOwner(msg.sender, _tokenId);
     }
+    /*
+     * Utility methods
+     */
     function incremenTokenCounter() private {
         require(mintedTokens < maxSupply, "Mintable nfts have reached maximum supply");
         mintedTokens = mintedTokens.add(1);
     }
     
-    function getNormalizedRandomNumber(uint256 _randomNumber) private pure returns(uint256){
-        return (_randomNumber % 100) + 1;
+    function getNormalizedRandomNumber(uint256 _randomNumber, uint _range) private pure returns(uint256){
+        return (_randomNumber % _range) + 1;
     }
 
     function getTokenUrl(uint256 _randomNumber) private view returns (string memory) {
-        if(_randomNumber >= configTicket.upperLimitCommon && _randomNumber <= configTicket.upperLimitRare) {
+        if(_randomNumber >= configTicket.updatedUpperLimitCommon && _randomNumber <= configTicket.updatedUpperLimitRare) {
             return configTicket.urlRare;
-        } else if(_randomNumber > configTicket.upperLimitRare) {
+        } else if(_randomNumber > configTicket.updatedUpperLimitRare) {
             return configTicket.urlSuperRare;
         } else {
             return configTicket.urlCommon;

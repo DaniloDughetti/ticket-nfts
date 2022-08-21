@@ -78,7 +78,7 @@ Features:
 
 Major frameworks/libraries used to bootstrap project:
 
-- **Solidity** v0.8.1
+- **Solidity** v0.8.7
 - **Hardhat** v8.5.0
 - **Node** v16.14.2
 
